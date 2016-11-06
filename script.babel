@@ -1,0 +1,188 @@
+var Renderer = React.createClass({
+	getInitialState: function() {
+		var fetchArr = [], fetch = JSON.parse(localStorage.getItem('recipes'))
+		if(fetch){
+			fetchArr = fetch
+		}
+		else
+		{
+		fetchArr.push(
+			{	id: 1,
+				name: "Burger",
+				ingredients: "lattuce,tomato,bun"
+			}, {
+				id: 2,
+				name: "Enchiladas",
+				ingredients: "cheese,green onion,tortillas,sauce,cream"
+				}
+
+			)
+		}
+		return {
+			recipes: fetchArr,
+			counter: false,
+			editing: false,
+			adding: false
+		}
+
+	},
+
+deleteData: function(rec) {
+		
+	var arr = this.state.recipes;
+	var myArray = arr.filter(function( obj ) {
+    return obj.id !== rec.id;
+});	
+		
+		localStorage.setItem('recipes', JSON.stringify(myArray))
+		this.setState({
+			recipes: myArray,
+			counter: false,
+			editing: false,
+			adding: false
+		})
+	},	
+
+// 	}, new
+editForm: function() {
+		return (
+			<div className="box form-group">
+				<label htmlFor="recipe">Recipe</label><br/>
+				<input type="text" id="recipename" ref="editname" defaultValue={this.state.editing.name} /><br/><br/>
+				<label htmlFor="ingredients">Ingredients</label><br/>
+				<textarea className="form-control" id="ingredient" ref="editingredient" defaultValue={this.state.editing.ingredients}></textarea><br/>
+				<button className="btn btn-success glyphicon glyphicon-floppy-disk" onClick={this.editData}></button>
+			</div>
+
+		)
+	},
+	editData: function() {
+		var recInput = ReactDOM.findDOMNode(this.refs.editname).value
+		var ingreInput = ReactDOM.findDOMNode(this.refs.editingredient).value
+		var fetchId = this.state.editing.id
+		var arr = this.state.recipes
+		for(var i=0;i<arr.length;i++){
+			if(arr[i].id == fetchId){
+				arr[i].name = recInput
+				arr[i].ingredients = ingreInput
+			}
+		}
+		localStorage.setItem('recipes', JSON.stringify(arr))
+		this.setState({
+			recipes: arr,
+			editing: false,
+			adding: false,
+			counter: false
+		})
+	},	
+	
+	
+// 	old
+	addForm: function() {
+		return (
+			<div className="box form-group">
+				<label htmlFor="recipe">Recipe</label><br/>
+				<input type="text" placeholder="Enter Recipe Name" id="recipe" ref="myInput"/><br/><br/>
+				<label htmlFor="ingredients" >Ingredients</label><br/>
+				<textarea placeholder="Enter Ingredients (comma seperated)" className="form-control" id="ingredients" ref="myTextarea"></textarea><br/>
+				<button className="btn btn-success glyphicon glyphicon-floppy-disk" onClick={this.addData}></button>
+			</div>
+
+		)
+	},
+	addData: function() {
+		var recInput = ReactDOM.findDOMNode(this.refs.myInput).value;
+		var ingreInput = ReactDOM.findDOMNode(this.refs.myTextarea).value,
+			arr = this.state.recipes;
+		var obj = {
+				id: "_d1089_recipes" + new Date().valueOf(),
+				name: recInput,
+				ingredients: ingreInput
+			} 
+		arr.push(obj)
+		localStorage.setItem('recipes', JSON.stringify(arr))
+		// console.log(JSON.parse(localStorage.getItem('recipes')))
+		this.setState({
+			recipes: arr,
+			adding: false
+		})
+	},
+	edit: function(rec) {
+		this.setState({
+			editing: rec
+		})
+	},
+	add: function() {
+		this.setState({
+			adding: true
+		})
+	},
+
+	clickHandler: function(rec) {
+		this.setState({
+			counter: rec
+		})
+	},
+
+	display: function() {
+		return (
+			<div className="box text-center">
+				<h2>Recipe Box</h2>
+				<ul>
+					{
+						// this.state.recipes
+						this.state.recipes.map(function(rec){
+							return <li key={rec.id} onClick={()=>this.clickHandler(rec)}><span>{rec.name}</span></li>
+					 }.bind(this) ) 
+							
+					}	
+				</ul>
+				<span>
+					<button className="btn btn-primary glyphicon glyphicon-plus" onClick={this.add}></button>
+				</span>
+			</div>
+		)
+	},
+
+	render: function() {
+		if (this.state.editing) {
+			return this.editForm()
+		}
+		else if (this.state.adding) {
+			return this.addForm()
+		} else if (this.state.counter === false) {
+			return this.display()
+		} else {
+			return (
+				<RenderSub counter={this.state.counter} editor={this.edit} deletion={this.deleteData}/>
+			)
+		}
+
+	}
+});
+
+var RenderSub = React.createClass({
+	render: function() {
+		var sub = this.props.counter
+		var ar = sub['ingredients'].split(',')
+		return (
+			<div className="box text-center">
+				<h2>{sub['name']}</h2>
+				<ul>
+					{
+						ar.map(function(el){
+							return <li><span>{el}</span></li>
+						})	
+					}
+				</ul>
+				<span>
+					<button className="btn btn-info glyphicon glyphicon-pencil" onClick={()=>this.props.editor(sub)}></button>
+					<button className="btn btn-danger glyphicon glyphicon-trash" onClick={()=>this.props.deletion(sub)}></button>
+				</span>
+			</div>
+		)
+	}
+
+})
+
+ReactDOM.render(<Renderer />, document.getElementById('main'));
